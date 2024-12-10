@@ -1,3 +1,4 @@
+import os
 import threading
 from datetime import datetime
 from time import sleep
@@ -29,49 +30,63 @@ def on_release(key):
     except AttributeError:
         pass
 
+
+def get_key_state_folder():
+    """Generate folder name based on the current key states."""
+    return "_".join(map(str, key_states))
+
+
+def ensure_folder_exists(folder_path):
+    """Ensure the specified folder exists."""
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+
 def capture_game_state():
+    """Capture a screenshot and save it in a folder named after the key states."""
+    # Get the current key state folder name
+    folder_name = f"screenshots/{get_key_state_folder()}"
+    ensure_folder_exists(folder_name)
+
     # Get the current timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]  # Add milliseconds
-    # File name for the current log
-    file_name = f"keylog/{timestamp}.txt"
-    # Capture screenshot with the same timestamp
-    capture_screenshot(timestamp)
-    # Write the key states to the file
-    with open(file_name, "w") as file:
-        file.write(f"{key_states}")
-    print(f"Logged: {file_name}", end='\r')  # Optional: Show the log in the terminal
+    screenshot_file = f"{folder_name}/{timestamp}.png"
 
-def capture_screenshot(timestamp):
+    # Capture and save the screenshot
+    capture_screenshot(screenshot_file)
+    print(f"Screenshot saved: {screenshot_file}", end='\r')  # Optional: Show the log in the terminal
+
+
+def capture_screenshot(file_path):
+    """Capture a screenshot of the game region."""
     with mss.mss() as sct:
         # Define the region to capture
-        region = {"top": 120, "left": 0, "width": 800, "height": 370}
+        region = {"top": 160, "left": 0, "width": 1000, "height": 400}
 
         # Capture the screen
         screenshot = sct.grab(region)
 
-        # File name for the screenshot with timestamp
-        screenshot_file = f"screenshots/{timestamp}.png"
-
         # Save the screenshot
-        mss.tools.to_png(screenshot.rgb, screenshot.size, output=screenshot_file)
+        mss.tools.to_png(screenshot.rgb, screenshot.size, output=file_path)
 
 
 def log_inputs_to_files():
+    """Continuously log key states and screenshots based on key states."""
     try:
         while True:
-            # Get the current timestamp
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]  # Add milliseconds
-            # File name for the current log
-            file_name = f"keylog/{timestamp}.txt"
+            # Get the current key state folder name
+            folder_name = f"screenshots/{get_key_state_folder()}"
+            ensure_folder_exists(folder_name)
 
-            print(key_states)  # DOESN'T WORK WITHOUT THIS PRINT STATEMENT DO NOT TOUCH!
+            # Only save a screenshot if any key is pressed
             if any(state == 1 for state in key_states):
-                # Capture screenshot with the same timestamp
-                capture_screenshot(timestamp)
-                # Write the key states to the file
-                with open(file_name, "w") as file:
-                    file.write(f"{key_states}")
-                print(f"Logged: {file_name}", end='\r')  # Optional: Show the log in the terminal
+                # Get the current timestamp and file path
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]
+                screenshot_file = f"{folder_name}/{timestamp}.png"
+
+                # Capture and save the screenshot
+                capture_screenshot(screenshot_file)
+                print(f"Screenshot saved: {screenshot_file}", end='\r')
             sleep(1 / 3)  # Log 3 times a second
     except KeyboardInterrupt:
         print("\nExiting...")
@@ -79,6 +94,7 @@ def log_inputs_to_files():
 
 # Listener setup
 def start_listener():
+    """Start the keyboard listener."""
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
 
