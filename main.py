@@ -45,7 +45,7 @@ def ensure_folder_exists(folder_path):
 def capture_game_state():
     """Capture a screenshot and save it in a folder named after the key states."""
     # Get the current key state folder name
-    folder_name = f"screenshots/{get_key_state_folder()}"
+    folder_name = f"test/{get_key_state_folder()}"
     ensure_folder_exists(folder_name)
 
     # Get the current timestamp
@@ -75,7 +75,7 @@ def log_inputs_to_files():
     try:
         while True:
             # Get the current key state folder name
-            folder_name = f"screenshots/{get_key_state_folder()}"
+            folder_name = f"test/{get_key_state_folder()}"
             ensure_folder_exists(folder_name)
 
             # Only save a screenshot if any key is pressed
