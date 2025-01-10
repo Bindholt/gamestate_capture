@@ -75,7 +75,7 @@ def log_inputs_to_files():
     try:
         while True:
             # Get the current key state folder name
-            folder_name = f"screenshots/{get_key_state_folder()}"
+            folder_name = f"test/{get_key_state_folder()}"
             ensure_folder_exists(folder_name)
 
             # Only save a screenshot if any key is pressed
