@@ -9,6 +9,7 @@ from pynput import keyboard, mouse
 # Define a list to represent the state of the keys: [w, a, s, d, e]
 key_states = [0, 0, 0, 0, 0]
 key_mapping = {'w': 0, 'a': 1, 's': 2, 'd': 3, 'e': 4}
+mapName = "test"
 
 # Initialize global variable for region
 region = {"top": 0, "left": 0, "width": 0, "height": 0}
@@ -48,8 +49,9 @@ def ensure_folder_exists(folder_path):
 
 def capture_game_state():
     """Capture a screenshot and save it in a folder named after the key states."""
+    # Either "screenshots" or "test"
     # Get the current key state folder name
-    folder_name = f"test/{get_key_state_folder()}"
+    folder_name = f"{mapName}/{get_key_state_folder()}"
     ensure_folder_exists(folder_name)
 
     # Get the current timestamp
@@ -108,7 +110,7 @@ def log_inputs_to_files():
             region_defined.wait()
 
             # Get the current key state folder name
-            folder_name = f"test/{get_key_state_folder()}"
+            folder_name = f"{mapName}/{get_key_state_folder()}"
             ensure_folder_exists(folder_name)
 
             # Only save a screenshot if any key is pressed
