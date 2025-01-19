@@ -4,11 +4,15 @@ from datetime import datetime
 from time import sleep
 import mss
 import mss.tools
-from pynput import keyboard
+from pynput import keyboard, mouse
 
 # Define a list to represent the state of the keys: [w, a, s, d, e]
 key_states = [0, 0, 0, 0, 0]
 key_mapping = {'w': 0, 'a': 1, 's': 2, 'd': 3, 'e': 4}
+
+# Initialize global variable for region
+region = {"top": 0, "left": 0, "width": 0, "height": 0}
+region_defined = threading.Event()  # Event to signal that region has been defined
 
 
 # Key press handler
@@ -60,8 +64,9 @@ def capture_game_state():
 def capture_screenshot(file_path):
     """Capture a screenshot of the game region."""
     with mss.mss() as sct:
-        # Define the region to capture
-        region = {"top": 160, "left": 0, "width": 1000, "height": 400}
+        # Check if region is defined
+        if region["width"] == 0 or region["height"] == 0:
+            raise ValueError("Region has not been defined. Please define the region first.")
 
         # Capture the screen
         screenshot = sct.grab(region)
@@ -70,10 +75,38 @@ def capture_screenshot(file_path):
         mss.tools.to_png(screenshot.rgb, screenshot.size, output=file_path)
 
 
+def define_region():
+    """Capture two mouse clicks to define the screenshot region."""
+    global region
+    coordinates = []
+
+    def on_click(x, y, button, pressed):
+        if pressed:
+            print(f"Mouse clicked at ({x}, {y})")
+            coordinates.append((x, y))
+            if len(coordinates) == 2:
+                # Calculate region from the two points
+                x1, y1 = coordinates[0]
+                x2, y2 = coordinates[1]
+                region["top"] = min(y1, y2)
+                region["left"] = min(x1, x2)
+                region["width"] = abs(x2 - x1)
+                region["height"] = abs(y2 - y1)
+                print(f"Region defined: {region}")
+                region_defined.set()  # Signal that the region has been defined
+                return False  # Stop listening after 2 clicks
+
+    with mouse.Listener(on_click=on_click) as listener:
+        listener.join()
+
+
 def log_inputs_to_files():
     """Continuously log key states and screenshots based on key states."""
     try:
         while True:
+            # Wait until region is defined
+            region_defined.wait()
+
             # Get the current key state folder name
             folder_name = f"test/{get_key_state_folder()}"
             ensure_folder_exists(folder_name)
@@ -93,13 +126,18 @@ def log_inputs_to_files():
 
 
 # Listener setup
-def start_listener():
+def start_keyboard_listener():
     """Start the keyboard listener."""
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()
 
 
 if __name__ == "__main__":
-    # Use threading to run the listener and logger simultaneously
-    threading.Thread(target=start_listener, daemon=True).start()
+    print("Please click twice on the screen to define the screenshot region.")
+    threading.Thread(target=define_region, daemon=True).start()
+
+    # Start the keyboard listener in a separate thread
+    threading.Thread(target=start_keyboard_listener, daemon=True).start()
+
+    # Start logging inputs to files
     log_inputs_to_files()
