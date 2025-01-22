@@ -9,7 +9,7 @@ from pynput import keyboard, mouse
 # Define a list to represent the state of the keys: [w, a, s, d, e]
 key_states = [0, 0, 0, 0, 0]
 key_mapping = {'w': 0, 'a': 1, 's': 2, 'd': 3, 'e': 4}
-mapName = "test"
+mapName = "screenshots"
 
 # Initialize global variable for region
 region = {"top": 0, "left": 0, "width": 0, "height": 0}
